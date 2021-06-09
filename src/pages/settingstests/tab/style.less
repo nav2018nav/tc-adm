@@ -1,0 +1,49 @@
+@import "~antd/es/style/themes/default.less";
+
+.cardModal {
+  display: inline-block;
+  margin-right: 9px;
+}
+.cardM {
+  margin-top: -43px;
+  text-align: right;
+}
+.cardAlign {
+  text-align: right;
+  border: none;
+}
+
+.cardModal button {
+  width: 150px;
+}
+
+@media screen and (max-width: @screen-sm) {
+  .cardAlign {
+    text-align: center;
+    border: none;
+  }
+
+  .cardModal button {
+    width: 139px;
+  }
+  .cardM {
+    position: absolute;
+    padding-top: 30px;
+  }
+}
+
+@media screen and (max-width: @screen-xs) {
+  .cardAlign {
+    text-align: center;
+    border: none;
+  }
+
+  .cardModal button {
+    width: 152px;
+  }
+
+  .cardM {
+    position: absolute;
+    padding-top: 30px;
+  }
+}

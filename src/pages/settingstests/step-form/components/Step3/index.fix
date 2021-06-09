@@ -1,0 +1,891 @@
+import {
+  Button,
+  Result,
+  Descriptions,
+  Table,
+  Statistic,
+  Image,
+  Form,
+  Select,
+  Input,
+  Row,
+  Col,
+  Checkbox,
+  Popconfirm,
+  message,
+  Divider,
+} from "antd";
+import React, { useState } from "react";
+import {
+  connect,
+  Dispatch,
+  history,
+  useIntl,
+  formatMessage,
+  FormattedMessage,
+} from "umi";
+import { StateType } from "../../model";
+import styles from "./index.less";
+import { PlusOutlined } from "@ant-design/icons";
+import { statusArr } from '@/utils/options';
+let chk_val;
+
+interface Step3Props {
+  datatwo?: StateType["step"];
+  dispatch?: Dispatch<any>;
+}
+
+const formItemLayout = {
+  labelCol: {
+    span: 5,
+  },
+  wrapperCol: {
+    span: 19,
+  },
+};
+
+function onChange(value) {
+  //console.log("changed", value);
+}
+
+function onChangeOne(e) {
+  let chk_val = e.target.checked;
+  //console.log(`checked = ${e.target.checked}`);
+}
+
+interface TableFormDateType {
+  key: string;
+  item?: string;
+}
+const Step3: React.FC<Step3Props> = (props) => {
+  const [item, setItem] = useState<FormValueType>([
+    {
+      name: "",
+      key: "",
+    },
+  ]);
+  const { datatwo, dispatch, list } = props;
+  const intl = useIntl();
+  const [data, setData] = useState(item);
+  const [form] = Form.useForm();
+
+  console.log(list);
+  const { validateFields, getFieldsValue } = form;
+  const [index, setIndex] = useState(0);
+
+  const getRowByKey = (key: string, newData?: TableFormDateType[]) =>
+    (newData || data)?.filter((item) => item.key === key)[0];
+
+  const newMember = () => {
+    const newData = data?.map((item) => ({ ...item })) || [];
+    // console.log(newData);
+
+    let written_arr1 = [];
+    let flag = true;
+
+    if (Object.keys(newData).length) {
+      for (var i = Object.keys(newData).length - 1; i >= 0; i--) {
+        if (Object.keys(newData[i]).length == 0) {
+          message.error(formatMessage({ id: "msg.step3.answer_msg" }));
+          flag = false;
+          return false;
+        }
+        if (newData[i].id == "" || !("id" in newData[i])) {
+          // if(!('id' in newData[i])){
+          message.error(formatMessage({ id: "msg.step3.answer_msg" }));
+          flag = false;
+          return false;
+        }
+      }
+    }
+
+    if (flag == true) {
+      newData.push({
+        key: `NEW_TEMP_ID_${index}`,
+        id: "",
+        editable: true,
+        isNew: true,
+        answer: chk_val,
+      });
+
+      setIndex(index + 1);
+      setData(newData);
+    }
+
+    //console.log("after");
+    //console.log(newData);
+  };
+
+  const remove = (key: string) => {
+    const newData = data?.filter(
+      (item) => item.key !== key
+    ) as TableFormDateType[];
+    setData(newData);
+    if (onChange) {
+      onChange(newData);
+    }
+    //console.log(newData);
+  };
+
+  const handleFieldChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string,
+    key: string
+  ) => {
+    //  console.log('hello');
+
+    const newData = [...(data as TableFormDateType[])];
+    const target = getRowByKey(key, newData);
+    // console.log(target);
+    // console.log(fieldName);
+    // console.log(e);
+    if (target) {
+      //console.log(fieldName);
+      target[fieldName] = e.target.value;
+      //target[fieldName] = e;
+      setData(newData);
+    }
+  };
+
+  const handleCheckChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: string,
+    key: string
+  ) => {
+    const newData = [...(data as TableFormDateType[])];
+
+    const target = getRowByKey(key, newData);
+    //console.log(fieldName);
+
+    if (target) {
+      //console.log(fieldName);
+      target[fieldName] = e.target.checked;
+      //target[fieldName] = e;
+      setData(newData);
+    }
+    let new_data = newData;
+  };
+
+  const [formVals, setFormVals] = useState<FormValueType>({
+    name: "",
+    desc: "",
+    key: "",
+    target: "0",
+    template: "0",
+    type: "1",
+    time: "",
+    frequency: "month",
+  });
+
+  if (!datatwo) {
+    return null;
+  }
+
+  const {
+    type,
+    que_name,
+    score_operator,
+    instruction,
+    score,
+    category_id,
+    media_files,
+    ques_type,
+    tick_answer,
+    ans_options,
+    measure1,
+    measure1_maxscore,
+    measure2,
+    measure2_maxscore,
+    measure3,
+    measure3_maxscore,
+    measure4,
+    measure4_maxscore,
+  } = datatwo;
+  let tick_answer_val = "";
+  if (tick_answer == "1") {
+    tick_answer_val = "true";
+  } else {
+    tick_answer_val = "false";
+  }
+  console.log(measure4_maxscore);
+  console.log(ans_options.id);
+  const { payAccount, receiverAccount, receiverName, amount } = datatwo;
+  const onFinish = async () => {
+    //console.log("finish call");
+    // const values = await validateFields();
+    //let values={};
+    console.log(datatwo);
+    //return false;
+
+    // console.log(values);
+    // return false;
+
+    if (dispatch) {
+      dispatch({
+        type: "questionFormAndstepForm/submitStepForm",
+        payload: {
+          ...datatwo,
+        },
+      });
+    }
+
+    //const { step, component } = getCurrentStepAndComponent(0);
+    localStorage.setItem("step", "done");
+    localStorage.removeItem("written_quetions_list");
+    localStorage.removeItem("media_quetions_list");
+
+    const timeout = setTimeout(() => {
+      history.push("/settingstests/tab/questions");
+      //history.push('/settingstests/tab/questions');
+      //location.replace("/settingstests/tab/questions");
+    }, 3000);
+
+    message.success(
+      formatMessage({ id: "settingstests.tests.success.subTitle" })
+    );
+  };
+
+  const onPrev = () => {
+    if (dispatch) {
+      const values = getFieldsValue();
+      dispatch({
+        type: "questionFormAndstepForm/saveStepFormData",
+        payload: {
+          ...data,
+          ...values,
+        },
+      });
+      dispatch({
+        type: "questionFormAndstepForm/saveCurrentStep",
+        payload: "confirm",
+      });
+    }
+  };
+
+
+  const renderContent = () => {
+    if (datatwo.ques_type == 1 && type == "written") {
+      return (
+        <>
+{(() => {
+  if (type == "written") {
+    return (
+      <>
+      <Descriptions
+       title= {intl.formatMessage({
+         id: "select_type_basic_info.step.list.TestName",
+         defaultMessage: "Question name",
+       })}
+       column={3}
+       >
+      <Descriptions.Item
+      label=
+      {intl.formatMessage({
+        id: "settingstests.tests.quetion_cateory_lbl",
+        defaultMessage: "Category",
+      })}
+      >{type}
+      </Descriptions.Item>
+
+      <Descriptions.Item
+      label=
+      {intl.formatMessage({
+        id: "settingstests.tests.quetion_que_name_lbl",
+        defaultMessage: "Category",
+      })}
+      >{que_name}</Descriptions.Item>
+
+          {list?.map((item) => {
+            return item.id == category_id ? (
+              <Descriptions.Item
+              label=
+              {intl.formatMessage({
+                id: "settingstests.tests.test_category",
+                defaultMessage: "Category",
+              })}
+
+              >{item.name}</Descriptions.Item>
+            ) : (
+              ""
+            );
+          })}
+
+      <Descriptions.Item
+      label=
+      {intl.formatMessage({
+        id: "settingstests.tests.quetion_que_type_lbl",
+        defaultMessage: "Category",
+      })}
+      >          <FormattedMessage
+                  id="settingstests.tests.trueorfalse"
+                  defaultMessage="True Or False"
+                />{" "}
+      </Descriptions.Item>
+
+      <Descriptions.Item
+                label=
+                {intl.formatMessage({
+                  id: "settingstests.tests.answer",
+                  defaultMessage: "Category",
+                })}
+                >{tick_answer_val}
+      </Descriptions.Item>
+
+                {(() => {
+                  if (media_files != "") {
+                    return (
+                      <>
+                        <Descriptions.Item
+                                  label=
+                                  {intl.formatMessage({
+                                    id: "settingstests.tests.image",
+                                    defaultMessage: "Category",
+                                  })}>
+                            {(() => {
+                              let obj = JSON.parse(
+                                localStorage.getItem(
+                                  "media_quetions_list"
+                                )
+                              );
+
+                              return (
+                                <>
+                                  {obj?.map((item) => (
+                                    <>
+                                      <Image
+                                        width={50}
+                                        src={item.response}
+                                      />
+                                    </>
+                                  ))}
+                                </>
+                              );
+
+
+                            })()}
+                        </Descriptions.Item>
+                      </>
+                    );
+                  }
+                })()}   </Descriptions>,
+              </>
+            );
+            }
+            })()}
+
+
+              <Form.Item
+              style={{ marginBottom: 8 }}
+              wrapperCol={{
+                xs: { span: 24, offset: 0 },
+                sm: {
+                  span: formItemLayout.wrapperCol.span,
+                  offset: formItemLayout.labelCol.span,
+                },
+              }}
+              >
+                <Button onClick={onPrev}><FormattedMessage id="settingstests.tests.modal.button.back" /></Button>
+
+                <Button
+                  type="primary"
+                  onClick={onFinish}
+                  style={{ marginLeft: 8 }}
+                >
+                <FormattedMessage id="settingstests.questions.success.button.done" />
+                </Button>
+              </Form.Item>
+        </>
+      );
+    }
+    if (datatwo.ques_type == 0 && type == "written") {
+      return (
+        <>
+
+{(() => {
+  if (type == "written") {
+    return (
+      <>
+      <Descriptions
+       title= {intl.formatMessage({
+         id: "select_type_basic_info.step.list.TestName",
+         defaultMessage: "Question name",
+       })}
+       column={3}
+       >
+         <Descriptions.Item
+           label=
+           {intl.formatMessage({
+           id: "settingstests.tests.quetion_cateory_lbl",
+           defaultMessage: "Category",
+           })}
+          >
+          {statusArr[type]}
+          </Descriptions.Item>
+
+          <Descriptions.Item
+            label=
+            {intl.formatMessage({
+            id: "settingstests.tests.test_category",
+            defaultMessage: "Category",
+            })}
+           >
+           {item.name}
+           </Descriptions.Item>
+
+           <Descriptions.Item
+             label=
+             {intl.formatMessage({
+             id: "settingstests.tests.quetion_que_name_lbl",
+             defaultMessage: "Category",
+             })}
+            >
+            {que_name}
+            </Descriptions.Item>
+
+            <Descriptions.Item
+              label=
+              {intl.formatMessage({
+              id: "settingstests.tests.quetion_que_type_lbl",
+              defaultMessage: "Category",
+              })}
+             >
+             <FormattedMessage
+               id="settingstests.tests.Multiplechoice"
+               defaultMessage="Multiple Choice"
+             />
+             </Descriptions.Item>
+
+             <Descriptions.Item
+               label=
+               {intl.formatMessage({
+               id: "settingstests.tests.quetion_que_type_lbl",
+               defaultMessage: "Category",
+               })}
+              >
+
+                {(() => {
+                  let obj = JSON.parse(
+                    localStorage.getItem("written_quetions_list")
+                  );
+
+                  return (
+                    <>
+                      {obj?.map((item) => (
+                        <>
+                          {item.id} <br />
+                        </>
+                      ))}
+                    </>
+                  );
+                })()}
+              </Descriptions.Item>
+
+        <Divider />
+        <Descriptions.Item
+          label=
+          {intl.formatMessage({
+          id: "settingstests.tests.answer",
+          defaultMessage: "Category",
+          })}
+         >
+
+           {datatwo.ans_options?.map((ansOption) => {
+             if (ansOption.answer) {
+               return (
+                 <>
+                   {ansOption.id} <br />
+                 </>
+               );
+             }
+           })}
+
+         </Descriptions.Item>
+
+        <Divider />
+
+        {(() => {
+          if (media_files != "") {
+            return (
+              <>
+
+              <Descriptions.Item
+                label=
+                {intl.formatMessage({
+                id: "settingstests.tests.image",
+                defaultMessage: "Category",
+                })}
+               >
+
+                 {(() => {
+                   let obj = JSON.parse(
+                     localStorage.getItem(
+                       "media_quetions_list"
+                     )
+                   );
+
+                   return (
+                     <>
+                       {obj?.map((item) => (
+                         <>
+                           <Image
+                             width={50}
+                             src={item.response}
+                           />
+                         </>
+                       ))}
+                     </>
+                   );
+                 })()}
+               </Descriptions.Item>
+              </>
+            );
+          }
+        })()}</Descriptions>
+      </>
+    );
+  }
+})()}
+
+
+    <Form.Item
+              style={{ marginBottom: 8 }}
+              wrapperCol={{
+                xs: { span: 24, offset: 0 },
+                sm: {
+                  span: formItemLayout.wrapperCol.span,
+                  offset: formItemLayout.labelCol.span,
+                },
+              }}
+              >
+                <Button onClick={onPrev}>
+                  {" "}
+                  <FormattedMessage id="label.backbtn" defaultMessage="" />{" "}
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={onFinish}
+                  style={{ marginLeft: 8 }}
+                >
+                  {" "}
+                  <FormattedMessage id="label.donebtn" defaultMessage="" />{" "}
+                </Button>
+              </Form.Item>
+        </>
+      );
+    }
+    if (datatwo.type == "physical") {
+      return (
+        <>
+        <Descriptions
+         title= {intl.formatMessage({
+           id: "select_type_basic_info.step.list.TestName",
+           defaultMessage: "Question name",
+         })}
+         column={3}
+         >
+        <Descriptions.Item
+          label=
+          {intl.formatMessage({
+          id: "settingstests.tests.quetion_cateory_lbl",
+          defaultMessage: "Category",
+          })}
+         >
+         {statusArr[type]}
+         </Descriptions.Item>
+
+         <Descriptions.Item
+           label=
+           {intl.formatMessage({
+           id: "label.quetionName",
+           defaultMessage: "Category",
+           })}
+          >
+          {que_name}
+          </Descriptions.Item>
+
+
+          {list?.map((item) => {
+            return item.id == category_id ? (
+              <Descriptions.Item
+              label=
+              {intl.formatMessage({
+                id: "settingstests.tests.test_category",
+                defaultMessage: "Category",
+              })}
+
+              >{item.name}</Descriptions.Item>
+            ) : (
+              ""
+            );
+          })}
+
+
+
+           <Descriptions.Item
+             label=
+             {intl.formatMessage({
+             id: "label.score_operator",
+             defaultMessage: "Category",
+             })}
+            >
+            {score_operator}
+            </Descriptions.Item>
+
+            <Descriptions.Item
+              label=
+              {intl.formatMessage({
+              id: "label.score_operator",
+              defaultMessage: "Category",
+              })}
+             >
+            {score}
+             </Descriptions.Item>
+
+             <Descriptions.Item
+               label=
+               {intl.formatMessage({
+               id: "label.gradeinstruction",
+               defaultMessage: "Category",
+               })}
+              >
+             {instruction}
+              </Descriptions.Item>
+
+              <Descriptions.Item
+                label=
+                {intl.formatMessage({
+                id: "label.gradeinstruction",
+                defaultMessage: "Category",
+                })}
+               >
+              {instruction}
+               </Descriptions.Item>
+
+</Descriptions>
+
+              <Form.Item
+              style={{ marginBottom: 8 }}
+              wrapperCol={{
+                xs: { span: 24, offset: 0 },
+                sm: {
+                  span: formItemLayout.wrapperCol.span,
+                  offset: formItemLayout.labelCol.span,
+                },
+              }}
+              >
+                <Button onClick={onPrev}>Back</Button>
+
+                <Button
+                  type="primary"
+                  onClick={onFinish}
+                  style={{ marginLeft: 8 }}
+                >
+                  Done
+                </Button>
+              </Form.Item>
+        </>
+      );
+    }
+    if (datatwo.type == "practical") {
+      return (
+        <>
+        <Descriptions
+         title= {intl.formatMessage({
+           id: "select_type_basic_info.step.list.TestName",
+           defaultMessage: "Question name",
+         })}
+         column={3}
+         >
+        <Descriptions.Item
+          label=
+          {intl.formatMessage({
+          id: "settingstests.tests.quetion_cateory_lbl",
+          defaultMessage: "Category",
+          })}
+         >
+        {statusArr[type]}
+         </Descriptions.Item>
+
+         <Descriptions.Item
+           label=
+           {intl.formatMessage({
+           id: "label.quetionName",
+           defaultMessage: "Category",
+           })}
+          >
+         {que_name}
+          </Descriptions.Item>
+
+          {list?.map((item) => {
+            return item.id == category_id ? (
+              <Descriptions.Item
+              label=
+              {intl.formatMessage({
+                id: "settingstests.tests.test_category",
+                defaultMessage: "Category",
+              })}
+
+              >{item.name}</Descriptions.Item>
+            ) : (
+              ""
+            );
+          })}
+
+
+          <Descriptions.Item
+            label=
+            {intl.formatMessage({
+            id: "label.measure1",
+            defaultMessage: "Category",
+            })}
+           >
+          {measure1}
+           </Descriptions.Item>
+
+           <Descriptions.Item
+             label=
+             {intl.formatMessage({
+             id: "label.measure1maxscore",
+             defaultMessage: "Category",
+             })}
+            >
+            {measure1_maxscore}
+            </Descriptions.Item>
+
+
+        {(() => {
+          if(measure2)
+            return (
+            <>
+            <Descriptions.Item
+              label=
+              {intl.formatMessage({
+              id: "label.measure2",
+              defaultMessage: "Category",
+              })}
+             >
+            {measure2}
+             </Descriptions.Item>
+
+             <Descriptions.Item
+               label=
+               {intl.formatMessage({
+               id: "label.measure1maxscore",
+               defaultMessage: "Category",
+               })}
+              >
+              {measure2_maxscore}</Descriptions.Item>
+             </>
+              );
+         })()}
+        {(() => {
+          if(measure3)
+            return (
+            <>
+            <Descriptions.Item
+              label=
+              {intl.formatMessage({
+              id: "label.measure3",
+              defaultMessage: "Category",
+              })}
+             >
+            {measure3}
+             </Descriptions.Item>
+
+             <Descriptions.Item
+               label=
+               {intl.formatMessage({
+               id: "labe3.measure1maxscore",
+               defaultMessage: "Category",
+               })}
+              >
+              {measure3_maxscore}</Descriptions.Item>
+            </>
+              );
+         })()}
+      {(() => {
+          if(measure4)
+            return (
+               <>
+               <Descriptions.Item
+                 label=
+                 {intl.formatMessage({
+                 id: "label.measure4",
+                 defaultMessage: "Category",
+                 })}
+                >
+               {measure4}
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label=
+                  {intl.formatMessage({
+                  id: "label.measure4maxscore",
+                  defaultMessage: "Category",
+                  })}
+                 >
+                 {measure4_maxscore}</Descriptions.Item>
+              </>
+              );
+         })()}
+
+
+                    <Descriptions.Item
+                      label=
+                      {intl.formatMessage({
+                      id: "label.placeholder.grade",
+                      defaultMessage: "Category",
+                      })}
+                     >
+                     {instruction}
+                     </Descriptions.Item>
+</Descriptions>
+        <Form.Item
+        style={{ marginBottom: 8 }}
+        wrapperCol={{
+          xs: { span: 24, offset: 0 },
+          sm: {
+            span: formItemLayout.wrapperCol.span,
+            offset: formItemLayout.labelCol.span,
+          },
+        }}
+        >
+          <Button onClick={onPrev}>
+            <FormattedMessage id="label.backbtn" defaultMessage="" />
+          </Button>
+          <Button
+            type="primary"
+            onClick={onFinish}
+            style={{ marginLeft: 8 }}
+          >
+            <FormattedMessage id="label.donebtn" defaultMessage="" />
+          </Button>
+        </Form.Item>
+        </>
+      );
+    }
+  };
+
+  return (
+    <Form {...formItemLayout} form={form} layout="horizontal" className={styles.stepForm} >
+      {renderContent()}
+    </Form>
+  );
+};
+
+export default connect(
+  ({
+    questionFormAndstepForm,
+    loading,
+  }: {
+    questionFormAndstepForm: StateType;
+    loading: {
+      effects: { [key: string]: boolean };
+    };
+  }) => ({
+    list: questionFormAndstepForm,
+
+    submitting: loading.effects["questionFormAndstepForm/submitStepForm"],
+    datatwo: questionFormAndstepForm.step,
+  })
+)(Step3);
